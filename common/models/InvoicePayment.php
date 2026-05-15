@@ -251,8 +251,8 @@ class InvoicePayment extends \yii\db\ActiveRecord
         $payment->received_callback = 1;
 
         if (!$payment->save()) {// && $payment->payment_current_status == 'CAPTURED'
-            Yii::error($payment->errors); print_r($payment->errors); die();
-            //self::onPaymentCaptured($payment);
+            Yii::error(print_r($payment->errors, true), __METHOD__);
+            return $payment;
         }
 
         //Send event to Segment

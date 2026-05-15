@@ -121,19 +121,23 @@ class OrderHistory extends \yii\db\ActiveRecord
      * @param $order_uuid
      * @param $status
      * @param $note
-     * @return void
+     * @return bool
      */
     public static function addOrderHistory($order_uuid, $status, $note) {
         $order = Order::find()
             ->andWhere(['order_uuid' => $order_uuid])
             ->one();
 
+        if (!$order) {
+            Yii::error('Order not found while adding history: ' . $order_uuid, __METHOD__);
+            return false;
+        }
+
         $order->scenario = "updateStatus";
         $order->order_status = $status;
         if (!$order->save()) {
-            Yii::error($order->errors);
-            print_r($order->errors);
-            die();
+            Yii::error(print_r($order->errors, true), __METHOD__);
+            return false;
         }
 
         $model = new OrderHistory();
@@ -141,10 +145,11 @@ class OrderHistory extends \yii\db\ActiveRecord
         $model->order_status = $status;
         $model->comment = $note;
         if (!$model->save()) {
-            Yii::error($model->errors);
-            print_r($model->errors);
-            die();
+            Yii::error(print_r($model->errors, true), __METHOD__);
+            return false;
         }
+
+        return true;
     }
 
     /**

@@ -218,9 +218,8 @@ class RestaurantInvoice extends \yii\db\ActiveRecord
                           $domainSubscription->to = $domainSubscriptionPayment->to;
 
                           if (!$domainSubscription->save()) {
-                                Yii::error(print_r($domainSubscription->errors, true));
-                              print_r($domainSubscription->errors);
-                              die();
+                              Yii::error(print_r($domainSubscription->errors, true), __METHOD__);
+                              continue;
                           }
 
                           Yii::$app->eventManager->track('Invoice Paid for Domain', [
