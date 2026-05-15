@@ -70,11 +70,11 @@ $this->registerJs($js);
         <div class="card-header">
 
           <div>
-            <h5><?= $businessLocation->country->country_name ?></h5>
+            <h5><?= Html::encode($businessLocation->country->country_name) ?></h5>
             <h3>
 
             <?=
-                Html::a($businessLocation->business_location_name  . ' <i class="feather icon-edit"></i>',
+                Html::a(Html::encode($businessLocation->business_location_name)  . ' <i class="feather icon-edit"></i>',
                 ['update',  'id' => $businessLocation->business_location_id, 'storeUuid' => $store->restaurant_uuid],
                 ['class' => '', 'style' => 'margin-bottom : 15px;     margin-right: 20px;']);
             ?>
