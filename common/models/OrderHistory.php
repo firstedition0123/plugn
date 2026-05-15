@@ -133,23 +133,36 @@ class OrderHistory extends \yii\db\ActiveRecord
             return false;
         }
 
-        $order->scenario = "updateStatus";
-        $order->order_status = $status;
-        if (!$order->save()) {
-            Yii::error(print_r($order->errors, true), __METHOD__);
+        $transaction = null;
+        try {
+            $transaction = Yii::$app->db->beginTransaction();
+            $order->scenario = "updateStatus";
+            $order->order_status = $status;
+            if (!$order->save()) {
+                Yii::error(print_r($order->errors, true), __METHOD__);
+                $transaction->rollBack();
+                return false;
+            }
+
+            $model = new OrderHistory();
+            $model->order_uuid = $order_uuid;
+            $model->order_status = $status;
+            $model->comment = $note;
+            if (!$model->save()) {
+                Yii::error(print_r($model->errors, true), __METHOD__);
+                $transaction->rollBack();
+                return false;
+            }
+
+            $transaction->commit();
+            return true;
+        } catch (\Throwable $exception) {
+            if ($transaction && $transaction->isActive) {
+                $transaction->rollBack();
+            }
+            Yii::error($exception->getMessage(), __METHOD__);
             return false;
         }
-
-        $model = new OrderHistory();
-        $model->order_uuid = $order_uuid;
-        $model->order_status = $status;
-        $model->comment = $note;
-        if (!$model->save()) {
-            Yii::error(print_r($model->errors, true), __METHOD__);
-            return false;
-        }
-
-        return true;
     }
 
     /**

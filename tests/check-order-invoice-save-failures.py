@@ -15,16 +15,23 @@ def compact(text: str) -> str:
     return "".join(text.split())
 
 
+def read_compacted(path: Path) -> str:
+    """Read a PHP file with a clear missing-file failure."""
+    if not path.is_file():
+        raise SystemExit(f"File not found: {path}")
+    return compact(path.read_text(encoding="utf-8"))
+
+
 def assert_absent(path: Path, needle: str, message: str) -> None:
     """Reject a compacted PHP snippet."""
-    text = compact(path.read_text(encoding="utf-8"))
+    text = read_compacted(path)
     if compact(needle) in text:
         raise SystemExit(message)
 
 
 def assert_present(path: Path, needle: str, message: str) -> None:
     """Require a compacted PHP snippet."""
-    text = compact(path.read_text(encoding="utf-8"))
+    text = read_compacted(path)
     if compact(needle) not in text:
         raise SystemExit(message)
 
@@ -59,13 +66,33 @@ def main() -> int:
     )
     assert_present(
         ORDER_HISTORY,
-        "Yii::error(print_r($order->errors, true), __METHOD__); return false;",
+        "$transaction = Yii::$app->db->beginTransaction();",
+        "OrderHistory should wrap status and history saves in a transaction.",
+    )
+    assert_present(
+        ORDER_HISTORY,
+        "Yii::error(print_r($order->errors, true), __METHOD__); $transaction->rollBack(); return false;",
         "OrderHistory order save failure should be logged and returned.",
     )
     assert_present(
         ORDER_HISTORY,
-        "Yii::error(print_r($model->errors, true), __METHOD__); return false;",
+        "Yii::error(print_r($model->errors, true), __METHOD__); $transaction->rollBack(); return false;",
         "OrderHistory history save failure should be logged and returned.",
+    )
+    assert_present(
+        ORDER_HISTORY,
+        "$transaction->commit(); return true;",
+        "OrderHistory should commit after status and history saves succeed.",
+    )
+    assert_present(
+        ORDER_HISTORY,
+        "catch (\\Throwable $exception)",
+        "OrderHistory should rollback and log thrown failures.",
+    )
+    assert_present(
+        ORDER_HISTORY,
+        "if ($transaction && $transaction->isActive) { $transaction->rollBack(); }",
+        "OrderHistory should rollback active transactions after thrown failures.",
     )
     assert_present(
         INVOICE_PAYMENT,
