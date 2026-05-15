@@ -69,8 +69,8 @@ def main() -> int:
     )
     assert_present(
         INVOICE_PAYMENT,
-        "Yii::error(print_r($payment->errors, true), __METHOD__); return $payment;",
-        "InvoicePayment save failure should be logged and returned.",
+        "Yii::error(print_r($payment->errors, true), __METHOD__); $payment->refresh(); return $payment;",
+        "InvoicePayment save failure should reload persisted state before returning.",
     )
     assert_present(
         RESTAURANT_INVOICE,

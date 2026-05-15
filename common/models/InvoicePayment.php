@@ -252,6 +252,7 @@ class InvoicePayment extends \yii\db\ActiveRecord
 
         if (!$payment->save()) {// && $payment->payment_current_status == 'CAPTURED'
             Yii::error(print_r($payment->errors, true), __METHOD__);
+            $payment->refresh();
             return $payment;
         }
 
