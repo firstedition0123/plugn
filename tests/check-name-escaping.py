@@ -1,44 +1,45 @@
 """Static regression checks for stored-name escaping in high-risk views."""
 
+import re
 from pathlib import Path
 
 
 ROOT = Path(__file__).resolve().parents[1]
 
 
-def require(path: str, needle: str) -> None:
+def require(path: str, pattern: str) -> None:
     """Assert that a file contains an expected escaping pattern."""
     content = (ROOT / path).read_text(encoding="utf-8")
-    if needle not in content:
-        raise AssertionError(f"{path} is missing expected escaping guard: {needle}")
+    if not re.search(pattern, content, flags=re.DOTALL):
+        raise AssertionError(f"{path} is missing expected escaping guard: {pattern}")
 
 
-def forbid(path: str, needle: str) -> None:
+def forbid(path: str, pattern: str) -> None:
     """Assert that a file no longer contains a known unsafe output pattern."""
     content = (ROOT / path).read_text(encoding="utf-8")
-    if needle in content:
-        raise AssertionError(f"{path} still contains unsafe raw output: {needle}")
+    if re.search(pattern, content, flags=re.DOTALL):
+        raise AssertionError(f"{path} still contains unsafe raw output: {pattern}")
 
 
 require(
     "frontend/views/business-location/index.php",
-    "Html::encode($businessLocation->country->country_name)",
+    r"Html::encode\(\s*\$businessLocation->country->country_name\s*\)",
 )
 require(
     "frontend/views/business-location/index.php",
-    "Html::a(Html::encode($businessLocation->business_location_name)",
+    r"Html::a\(\s*Html::encode\(\s*\$businessLocation->business_location_name\s*\)",
 )
 forbid(
     "frontend/views/business-location/index.php",
-    "Html::a($businessLocation->business_location_name  . ' <i",
+    r"Html::a\(\s*\$businessLocation->business_location_name\s*\.\s*'",
 )
 require(
     "backend/views/subscription-payment/view.php",
-    "'format' => 'text',",
+    r"'format'\s*=>\s*'text'\s*,",
 )
 forbid(
     "backend/views/subscription-payment/view.php",
-    "'label' => 'Store Name',\n                'format' => 'raw',",
+    r"'label'\s*=>\s*'Store Name'\s*,\s*'format'\s*=>\s*'raw'\s*,",
 )
 
 print("name escaping guards passed")
