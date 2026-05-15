@@ -60,9 +60,8 @@ class ShippingHelper
         $errors =   $pack->get_errors();
 
         if( !empty($errors) ){
-            print_r($errors);die();
-            //do nothing
-            return;
+            \Yii::warning('Unable to build shipping packages: ' . print_r($errors, true), __METHOD__);
+            return [];
         } else {
             $boxes    =   $pack->get_packed_boxes();
             $unpacked_items =   $pack->get_unpacked_items();
